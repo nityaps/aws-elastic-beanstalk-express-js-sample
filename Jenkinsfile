@@ -37,18 +37,26 @@ pipeline {
         }
 
         stage('Security Scan') {
-            agent {
-                docker {
-                    image 'node:16'
-                    reuseNode true
-                }
-            }
-
-            steps {
-                sh 'npm audit --audit-level=high'
-            }
+    agent {
+        docker {
+            image 'node:16'
+            reuseNode true
         }
+    }
 
+    steps {
+        sh '''
+            npm audit --json > npm-audit.json || true
+            npm audit --audit-level=high
+        '''
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'npm-audit.json', allowEmptyArchive: true
+        }
+    }
+}
         stage('Docker Build') {
             agent any
 
